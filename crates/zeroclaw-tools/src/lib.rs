@@ -81,6 +81,7 @@ pub mod send_via;
 pub mod sessions;
 pub mod text_browser;
 pub mod tool_search;
+pub mod video_analysis;
 pub mod weather_tool;
 pub mod web_fetch;
 pub mod web_search_provider_routing;

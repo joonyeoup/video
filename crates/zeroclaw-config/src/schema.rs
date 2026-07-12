@@ -392,6 +392,12 @@ pub struct Config {
     #[group = "Tools"]
     pub web_fetch: WebFetchConfig,
 
+    /// Video analysis tool configuration (`[video_analysis]`).
+    #[serde(default)]
+    #[nested]
+    #[group = "Tools"]
+    pub video_analysis: VideoAnalysisConfig,
+
     /// Link enricher configuration (`[link_enricher]`).
     #[serde(default)]
     #[nested]
@@ -7461,6 +7467,133 @@ impl Default for WebFetchConfig {
             max_response_size: default_web_fetch_max_response_size(),
             timeout_secs: default_web_fetch_timeout_secs(),
             firecrawl: FirecrawlConfig::default(),
+        }
+    }
+}
+
+// ── Video analysis ───────────────────────────────────────────────
+
+/// Face detector backend used by the `analyze_video` tool's local
+/// detection stage.
+#[derive(
+    Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq, zeroclaw_macros::ConfigEnum,
+)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+#[serde(rename_all = "snake_case")]
+pub enum FaceDetectorKind {
+    /// OpenCV YuNet ONNX detector (preferred: fast, accurate at small sizes).
+    #[default]
+    Yunet,
+    /// OpenCV DNN ResNet-SSD Caffe detector (fallback).
+    ResnetSsd,
+}
+
+/// Video analysis tool configuration (`[video_analysis]` section).
+///
+/// Drives the `analyze_video` tool: frames are sampled locally, faces are
+/// detected locally (only face crops ever leave the machine), and the crops
+/// are described by an external OpenAI-compatible vision model configured in
+/// `[video_analysis.vlm]`. Disabled by default; the tool is only registered
+/// when `enabled = true`.
+#[derive(Debug, Clone, Serialize, Deserialize, Configurable)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+#[prefix = "video_analysis"]
+pub struct VideoAnalysisConfig {
+    /// Enable the `analyze_video` tool
+    #[serde(default)]
+    pub enabled: bool,
+    /// Frame sampling rate in frames per second (default: 1.0)
+    #[serde(default = "default_video_analysis_sample_fps")]
+    pub sample_fps: f64,
+    /// Directory where aggregated analysis JSON files are written
+    /// (relative paths resolve against the agent workspace)
+    #[serde(default = "default_video_analysis_output_dir")]
+    pub output_dir: String,
+    /// Face detector backend (`yunet` or `resnet_ssd`)
+    #[serde(default)]
+    pub face_detector: FaceDetectorKind,
+    /// Directory holding detector model weights (see
+    /// `scripts/download_face_models.sh`); relative paths resolve against
+    /// the agent workspace
+    #[serde(default = "default_video_analysis_models_dir")]
+    pub models_dir: String,
+    /// Python interpreter used for the OpenCV face-detection helper
+    #[serde(default = "default_video_analysis_python_bin")]
+    pub python_bin: String,
+    /// External vision-language model server (`[video_analysis.vlm]`)
+    #[serde(default)]
+    #[nested]
+    pub vlm: VideoAnalysisVlmConfig,
+}
+
+/// External VLM server used by `analyze_video` (`[video_analysis.vlm]`).
+///
+/// Any OpenAI-compatible `/v1/chat/completions` endpoint with vision
+/// support works (e.g. vLLM serving Qwen3-VL).
+#[derive(Debug, Clone, Serialize, Deserialize, Configurable)]
+#[cfg_attr(feature = "schema-export", derive(schemars::JsonSchema))]
+#[prefix = "video_analysis.vlm"]
+pub struct VideoAnalysisVlmConfig {
+    /// Server base URL, e.g. `http://192.168.1.20:8000` (the tool appends
+    /// `/v1/chat/completions`). Required when `video_analysis.enabled`.
+    #[serde(default)]
+    pub base_url: String,
+    /// Model name as served, e.g. `Qwen/Qwen3-VL-8B-Instruct`.
+    /// Required when `video_analysis.enabled`.
+    #[serde(default)]
+    pub model: String,
+    /// Optional bearer token sent as `Authorization: Bearer <key>`
+    #[serde(default)]
+    #[secret]
+    #[credential_class = "encrypted_secret"]
+    #[cfg_attr(feature = "schema-export", schemars(extend("x-secret" = true)))]
+    pub api_key: Option<String>,
+    /// Per-request timeout in seconds (default: 120)
+    #[serde(default = "default_video_analysis_vlm_timeout_secs")]
+    pub timeout_secs: u64,
+}
+
+fn default_video_analysis_sample_fps() -> f64 {
+    1.0
+}
+
+fn default_video_analysis_output_dir() -> String {
+    "./analysis_output".into()
+}
+
+fn default_video_analysis_models_dir() -> String {
+    "./models".into()
+}
+
+fn default_video_analysis_python_bin() -> String {
+    "python3".into()
+}
+
+fn default_video_analysis_vlm_timeout_secs() -> u64 {
+    120
+}
+
+impl Default for VideoAnalysisConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            sample_fps: default_video_analysis_sample_fps(),
+            output_dir: default_video_analysis_output_dir(),
+            face_detector: FaceDetectorKind::default(),
+            models_dir: default_video_analysis_models_dir(),
+            python_bin: default_video_analysis_python_bin(),
+            vlm: VideoAnalysisVlmConfig::default(),
+        }
+    }
+}
+
+impl Default for VideoAnalysisVlmConfig {
+    fn default() -> Self {
+        Self {
+            base_url: String::new(),
+            model: String::new(),
+            api_key: None,
+            timeout_secs: default_video_analysis_vlm_timeout_secs(),
         }
     }
 }
@@ -16991,6 +17124,7 @@ impl Default for Config {
             multimodal: MultimodalConfig::default(),
             media_pipeline: MediaPipelineConfig::default(),
             web_fetch: WebFetchConfig::default(),
+            video_analysis: VideoAnalysisConfig::default(),
             link_enricher: LinkEnricherConfig::default(),
             text_browser: TextBrowserConfig::default(),
             web_search: WebSearchConfig::default(),
@@ -23705,6 +23839,7 @@ auto_save = true
             multimodal: MultimodalConfig::default(),
             media_pipeline: MediaPipelineConfig::default(),
             web_fetch: WebFetchConfig::default(),
+            video_analysis: VideoAnalysisConfig::default(),
             link_enricher: LinkEnricherConfig::default(),
             text_browser: TextBrowserConfig::default(),
             web_search: WebSearchConfig::default(),
@@ -24416,6 +24551,7 @@ default_temperature = 0.7
             multimodal: MultimodalConfig::default(),
             media_pipeline: MediaPipelineConfig::default(),
             web_fetch: WebFetchConfig::default(),
+            video_analysis: VideoAnalysisConfig::default(),
             link_enricher: LinkEnricherConfig::default(),
             text_browser: TextBrowserConfig::default(),
             web_search: WebSearchConfig::default(),

@@ -74,6 +74,7 @@ use crate::sessions::{
 };
 use crate::text_browser::TextBrowserTool;
 use crate::tool_search::ToolSearchTool;
+use crate::video_analysis::VideoAnalysisTool;
 use crate::weather_tool::WeatherTool;
 use crate::web_fetch::WebFetchTool;
 use crate::web_search_tool::WebSearchTool;
@@ -143,6 +144,7 @@ tool_attribution!(SessionsListTool, ToolKind::Plugin);
 tool_attribution!(SessionsSendTool, ToolKind::Plugin);
 tool_attribution!(TextBrowserTool, ToolKind::Plugin);
 tool_attribution!(ToolSearchTool, ToolKind::Search);
+tool_attribution!(VideoAnalysisTool, ToolKind::Plugin);
 tool_attribution!(WeatherTool, ToolKind::Plugin);
 tool_attribution!(WebFetchTool, ToolKind::FetchUrl);
 tool_attribution!(WebSearchTool, ToolKind::Search);

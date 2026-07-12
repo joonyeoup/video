@@ -125,6 +125,7 @@ pub use zeroclaw_tools::sessions::{
 };
 pub use zeroclaw_tools::text_browser::TextBrowserTool;
 pub use zeroclaw_tools::tool_search::ToolSearchTool;
+pub use zeroclaw_tools::video_analysis::VideoAnalysisTool;
 pub use zeroclaw_tools::weather_tool::WeatherTool;
 pub use zeroclaw_tools::web_fetch::WebFetchTool;
 pub use zeroclaw_tools::web_search_tool::WebSearchTool;
@@ -725,6 +726,19 @@ pub fn all_tools_with_runtime(
     // model out from under the parent (the switch signal is process-wide).
     if is_subagent_caller {
         tool_arcs.retain(|tool| tool.name() != ModelSwitchTool::NAME);
+    }
+
+    // analyze_video — registered only when the video-analysis pipeline is
+    // enabled; wrapped like the other path-taking tools so the `path`
+    // argument goes through the allowlist guard and rate limiting.
+    if root_config.video_analysis.enabled {
+        tool_arcs.push(Arc::new(RateLimitedTool::new(
+            PathGuardedTool::new(
+                VideoAnalysisTool::new(security.clone(), root_config.video_analysis.clone()),
+                security.clone(),
+            ),
+            security.clone(),
+        )));
     }
 
     // Register discord_search if any configured Discord alias has
@@ -1742,6 +1756,64 @@ mod tests {
                 "SOP tool '{name}' must not be registered when engine is absent"
             );
         }
+    }
+
+    /// `analyze_video` registers only when `video_analysis.enabled` is set.
+    /// Proves the production gating path at `all_tools_with_runtime`.
+    #[test]
+    fn analyze_video_gated_on_config_flag() {
+        let tmp = TempDir::new().unwrap();
+        let security = Arc::new(SecurityPolicy::default());
+        let mem_cfg = MemoryConfig {
+            backend: "markdown".into(),
+            ..MemoryConfig::default()
+        };
+        let browser = BrowserConfig {
+            enabled: false,
+            allowed_domains: vec![],
+            session_name: None,
+            ..BrowserConfig::default()
+        };
+        let http = zeroclaw_config::schema::HttpRequestConfig::default();
+        let mut cfg = test_config(&tmp);
+
+        let build = |cfg: &Config| {
+            let mem: Arc<dyn Memory> =
+                Arc::from(zeroclaw_memory::create_memory(&mem_cfg, tmp.path(), None).unwrap());
+            all_tools(
+                Arc::new(Config::default()),
+                &security,
+                &zeroclaw_config::schema::RiskProfileConfig::default(),
+                "test-agent",
+                mem,
+                None,
+                None,
+                &browser,
+                &http,
+                &zeroclaw_config::schema::WebFetchConfig::default(),
+                tmp.path(),
+                &HashMap::new(),
+                None,
+                cfg,
+                None,
+                false,
+                None,
+            )
+            .tools
+        };
+
+        let names: Vec<String> = build(&cfg).iter().map(|t| t.name().to_string()).collect();
+        assert!(
+            !names.iter().any(|n| n == "analyze_video"),
+            "analyze_video must not be registered when video_analysis.enabled is false"
+        );
+
+        cfg.video_analysis.enabled = true;
+        let names: Vec<String> = build(&cfg).iter().map(|t| t.name().to_string()).collect();
+        assert!(
+            names.iter().any(|n| n == "analyze_video"),
+            "analyze_video must be registered when video_analysis.enabled is true"
+        );
     }
 
     /// SOP tools MUST appear in the tool registry when an engine handle is
