@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets"
+        xmlns:tizen="http://tizen.org/ns/widgets"
+        id="http://zeroclaw.local/LivingRoomDemo"
+        version="1.0.0"
+        viewmodes="maximized">
+    <tizen:application id="ZCLivRm001.LivingRoom"
+                       package="ZCLivRm001"
+                       required_version="7.0"/>
+    <content src="index.html"/>
+    <name>Living Room Analysis</name>
+    <icon src="icon.png"/>
+    <tizen:profile name="tv"/>
+
+    <!-- Network access to the ZeroClaw gateway. origin="*" so the backend IP
+         can change without repackaging; tighten to the exact origin for any
+         build that leaves the demo lab. -->
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <access origin="*" subdomains="true"/>
+    <tizen:allow-navigation>*</tizen:allow-navigation>
+
+    <!-- hwkey-event keeps the remote's Back key (10009) delivered to the app -->
+    <tizen:setting screen-orientation="landscape"
+                   context-menu="disable"
+                   background-support="disable"
+                   encryption="disable"
+                   install-location="auto"
+                   hwkey-event="enable"/>
+</widget>

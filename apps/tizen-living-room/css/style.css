@@ -1,0 +1,267 @@
+/* Living Room Analysis — 1920x1080 fixed, 10-foot design, light theme. */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    font-family: "SamsungOne", "Samsung One", -apple-system, "Segoe UI",
+                 Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 30px;
+    color: #1c2333;
+    background: linear-gradient(160deg, #f4f6f9 0%, #e9edf3 100%);
+    cursor: none; /* remote-driven UI, no pointer */
+}
+
+#stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.state[hidden] {
+    display: none;
+}
+
+/* ── Idle ────────────────────────────────────────────────────── */
+
+.eyebrow {
+    font-size: 20px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: #8a93a6;
+    margin-bottom: 28px;
+}
+
+.title {
+    font-size: 64px;
+    font-weight: 700;
+    color: #101623;
+    margin-bottom: 18px;
+}
+
+.subtitle {
+    font-size: 30px;
+    color: #6b7385;
+    margin-bottom: 64px;
+}
+
+/* ── Buttons (single focusable element per state) ───────────── */
+
+.pill {
+    min-width: 360px;
+    height: 88px;
+    padding: 0 56px;
+    border-radius: 44px;
+    font-size: 32px;
+    font-weight: 600;
+    font-family: inherit;
+    border: 3px solid transparent;
+    outline: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease,
+                background-color 0.15s ease;
+}
+
+.pill-primary {
+    background: #1a4fd6;
+    color: #ffffff;
+}
+
+.pill-outline {
+    background: transparent;
+    color: #1a4fd6;
+    border-color: #1a4fd6;
+    min-width: 300px;
+    height: 76px;
+    font-size: 28px;
+    margin-top: 40px;
+}
+
+/* Focus ring must be unmistakable from 10 feet. */
+.pill:focus {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 4px #ffffff, 0 0 0 10px #1a4fd6,
+                0 18px 40px rgba(26, 79, 214, 0.35);
+}
+
+.pill-primary:focus {
+    background: #2b60ea;
+}
+
+.pill-outline:focus {
+    background: #eaf0ff;
+}
+
+/* ── Loading ─────────────────────────────────────────────────── */
+
+.spinner {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 8px solid #d7ddea;
+    border-top-color: #1a4fd6;
+    animation: spin 1s linear infinite;
+    margin-bottom: 44px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-status {
+    font-size: 32px;
+    color: #3a4256;
+    margin-bottom: 16px;
+}
+
+.loading-elapsed {
+    font-size: 28px;
+    font-family: "SFMono-Regular", Consolas, "Courier New", monospace;
+    color: #8a93a6;
+}
+
+/* ── Result card ─────────────────────────────────────────────── */
+
+.card {
+    width: 1240px;
+    max-height: 840px;
+    background: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 6px 16px rgba(16, 22, 35, 0.06),
+                0 24px 64px rgba(16, 22, 35, 0.14);
+    padding: 56px 72px 44px;
+    text-align: left;
+    animation: card-in 0.3s ease-out;
+}
+
+@keyframes card-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 32px;
+    border-bottom: 2px solid #edf0f6;
+    margin-bottom: 40px;
+}
+
+.card-title {
+    font-size: 44px;
+    font-weight: 600;
+    color: #101623;
+    margin-bottom: 8px;
+}
+
+.card-subtitle {
+    font-size: 26px;
+    color: #8a93a6;
+}
+
+.chip {
+    font-size: 22px;
+    font-weight: 600;
+    padding: 10px 26px;
+    border-radius: 30px;
+    white-space: nowrap;
+}
+
+.chip-ok {
+    background: #e4f5e9;
+    color: #1d7a3d;
+}
+
+/* Events — the hero content. */
+
+.event-list {
+    list-style: none;
+}
+
+.event-list li {
+    position: relative;
+    padding-left: 44px;
+    font-size: 36px;
+    line-height: 1.4;
+    color: #2a3145;
+    margin-bottom: 28px;
+}
+
+.event-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 18px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #1a4fd6;
+}
+
+/* Many events: step down and flow into two columns so the card
+   never scrolls (TV = no scrolling). Class applied from app.js. */
+.event-list.dense {
+    column-count: 2;
+    column-gap: 64px;
+}
+
+.event-list.dense li {
+    font-size: 30px;
+    margin-bottom: 22px;
+    break-inside: avoid;
+}
+
+.event-list.dense li::before {
+    top: 14px;
+    width: 12px;
+    height: 12px;
+}
+
+.card-footer {
+    padding-top: 28px;
+    border-top: 2px solid #edf0f6;
+    font-size: 24px;
+    color: #8a93a6;
+}
+
+/* ── Error ───────────────────────────────────────────────────── */
+
+.card-error {
+    width: 900px;
+    text-align: center;
+    padding: 64px 72px;
+}
+
+.error-glyph {
+    font-size: 72px;
+    color: #d9822b;
+    margin-bottom: 24px;
+}
+
+.error-title {
+    font-size: 36px;
+    font-weight: 600;
+    color: #101623;
+    margin-bottom: 16px;
+}
+
+.error-detail {
+    font-size: 26px;
+    color: #8a93a6;
+    word-break: break-word;
+}

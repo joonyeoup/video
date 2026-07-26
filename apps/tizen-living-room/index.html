@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; connect-src http: https:; style-src 'self'; img-src 'self' data:;">
+    <title>Living Room Analysis</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <main id="stage">
+
+        <!-- ── Idle ─────────────────────────────────────────────── -->
+        <section id="state-idle" class="state" hidden>
+            <p class="eyebrow">ZeroClaw &middot; Samsung Internal Demo</p>
+            <h1 class="title">Living Room Analysis</h1>
+            <p id="idle-video-name" class="subtitle"></p>
+            <button id="btn-analyze" class="pill pill-primary" type="button">Analyze</button>
+        </section>
+
+        <!-- ── Loading ──────────────────────────────────────────── -->
+        <section id="state-loading" class="state" hidden>
+            <div class="spinner" aria-hidden="true"></div>
+            <p id="loading-status" class="loading-status">Contacting agent&hellip;</p>
+            <p id="loading-elapsed" class="loading-elapsed">0:00</p>
+        </section>
+
+        <!-- ── Result ───────────────────────────────────────────── -->
+        <section id="state-result" class="state" hidden>
+            <div class="card">
+                <header class="card-header">
+                    <div>
+                        <h2 class="card-title">Living Room Analysis</h2>
+                        <p id="result-video-name" class="card-subtitle"></p>
+                    </div>
+                    <span class="chip chip-ok">Complete</span>
+                </header>
+                <ul id="event-list" class="event-list"></ul>
+                <footer id="result-meta" class="card-footer"></footer>
+            </div>
+            <button id="btn-again" class="pill pill-outline" type="button">Analyze Again</button>
+        </section>
+
+        <!-- ── Error ────────────────────────────────────────────── -->
+        <section id="state-error" class="state" hidden>
+            <div class="card card-error">
+                <p class="error-glyph" aria-hidden="true">&#9888;</p>
+                <h2 id="error-title" class="error-title">Couldn&rsquo;t reach the analysis server</h2>
+                <p id="error-detail" class="error-detail"></p>
+            </div>
+            <button id="btn-retry" class="pill pill-primary" type="button">Retry</button>
+        </section>
+
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
